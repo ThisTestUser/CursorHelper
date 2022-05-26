@@ -7,6 +7,10 @@ import com.sun.jna.platform.win32.WinDef.HWND;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+
 import javax.swing.*;
 
 public class MainScreen
@@ -100,30 +104,12 @@ public class MainScreen
 				{
 					int x = Integer.parseInt(xField.getText());
 					int y = Integer.parseInt(yField.getText());
-					int tempX = x;
-					int tempY = y;
 					int count = 0;
-					int moveX = x * 4/5;
-					int moveY = y * 4/5;
-					Robot r = new Robot();
-					r.mouseMove(0, 0);
-					r.mouseMove(x, y);
-					Point loc = MouseInfo.getPointerInfo().getLocation();
-					while((loc.x != x || loc.y != y) && count < 25)
+					Point loc = getMouseLocation();
+					while((loc.x != x || loc.y != y) && count < 10)
 					{
-						if(loc.x > x)
-							tempX--;
-						else if(loc.x < x)
-							tempX++;
-						if(loc.y > y)
-							tempY--;
-						else if(loc.y < y)
-							tempY++;
-						moveX = tempX * 4/5;
-						moveY = tempY * 4/5;
-						r.mouseMove(0, 0);
-						r.mouseMove(moveX, moveY);
-						loc = MouseInfo.getPointerInfo().getLocation();
+						setMouseLocation(x, y);
+						loc = getMouseLocation();
 						count++;
 					}
 				}catch(Exception ex)
@@ -186,7 +172,7 @@ public class MainScreen
 			@Override
 			public synchronized void actionPerformed(ActionEvent e)
 			{
-				Point point = MouseInfo.getPointerInfo().getLocation();
+				Point point = getMouseLocation();
 				mouseXY.setText("Mouse X: " + point.getX() + " Y: " + point.getY());
             }
         });
@@ -230,6 +216,42 @@ public class MainScreen
 		public String toString()
 		{
 			return title;
+		}
+	}
+	
+	public static native boolean setMouseLocation(int x, int y);
+	
+	public static native Point getMouseLocation();
+	
+	private static native void setupDPI();
+	
+	private static void loadNativeLibrary() throws Exception
+	{
+		File library = File.createTempFile("mouseutils", ".dll");
+        library.deleteOnExit();
+        try(InputStream input = MainScreen.class.getResourceAsStream("/lib/mouseutils.dll"))
+        {
+            try(FileOutputStream out = new FileOutputStream(library))
+            {
+            	int bytes;
+            	byte[] buffer = new byte[2048];
+            	
+            	while((bytes = input.read(buffer)) != -1)
+            		out.write(buffer, 0, bytes);
+            }	
+        }
+        System.load(library.getAbsolutePath());
+	}
+	
+	static
+	{
+		try
+		{
+			loadNativeLibrary();
+			setupDPI();
+		}catch(Exception e)
+		{
+			throw new RuntimeException("Cannot load mouseutils library", e);
 		}
 	}
 }
