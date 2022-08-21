@@ -20,7 +20,6 @@ public class MainScreen
 	private JTextField yField;
 	private JLabel mouseXY;
 	private volatile long errorTime;
-	private volatile String errorMessage;
 	
 	/**
 	 * Launch the application.
