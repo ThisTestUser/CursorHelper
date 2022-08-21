@@ -18,6 +18,9 @@ public class MainScreen
 	private JFrame frame;
 	private JTextField xField;
 	private JTextField yField;
+	private JLabel mouseXY;
+	private volatile long errorTime;
+	private volatile String errorMessage;
 	
 	/**
 	 * Launch the application.
@@ -102,8 +105,8 @@ public class MainScreen
 			{
 				try
 				{
-					int x = Integer.parseInt(xField.getText());
-					int y = Integer.parseInt(yField.getText());
+					int x = Integer.parseInt(xField.getText().trim());
+					int y = Integer.parseInt(yField.getText().trim());
 					int count = 0;
 					Point loc = getMouseLocation();
 					while((loc.x != x || loc.y != y) && count < 10)
@@ -114,7 +117,8 @@ public class MainScreen
 					}
 				}catch(Exception ex)
 				{
-					
+					errorTime = System.currentTimeMillis() + 1500L;
+					mouseXY.setText(ex.getClass().getName() + ": " + ex.getMessage());
 				}
 			}
 		});
@@ -150,7 +154,7 @@ public class MainScreen
 		gbc_refreshButton.gridy = 1;
 		frame.getContentPane().add(refreshButton, gbc_refreshButton);
 		
-		JLabel mouseXY = new JLabel("Mouse X: null Y: null");
+		mouseXY = new JLabel("Mouse X: null Y: null");
 		GridBagConstraints gbc_mouseXY = new GridBagConstraints();
 		gbc_mouseXY.insets = new Insets(5, 5, 5, 5);
 		gbc_mouseXY.gridx = 0;
@@ -172,6 +176,9 @@ public class MainScreen
 			@Override
 			public synchronized void actionPerformed(ActionEvent e)
 			{
+				if(errorTime > System.currentTimeMillis())
+					return;
+				errorTime = -1;
 				Point point = getMouseLocation();
 				mouseXY.setText("Mouse X: " + point.getX() + " Y: " + point.getY());
             }
